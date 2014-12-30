@@ -32,12 +32,13 @@ namespace UpService
                 else if (section.UserName == "NetworkService")
                     x.RunAsNetworkService();
                 else
-                    x.RunAs(section.UserName, section.Password);
+                    x.RunAs(System.Environment.MachineName +"\\"+ section.UserName, section.Password);
                 x.SetDescription(section.ServiceName);        //7
                 x.SetDisplayName(section.ServiceName);                       //8
                 x.SetServiceName(section.ServiceName    );                       //9
                 x.UseNLog();
             });                                                  //10 
+             
         }
         //static void Main2(string[] args)
         //{

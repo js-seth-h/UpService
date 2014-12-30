@@ -22,7 +22,7 @@ namespace UpService
      
     public class UpServiceSection : ConfigurationSection
     {
-        [ConfigurationProperty("ServiceName")]
+        [ConfigurationProperty("ServiceName", IsRequired=true)]
         public CDATAElement ServiceNameEl
         {
             get { return (this["ServiceName"] as CDATAElement); }
@@ -49,5 +49,13 @@ namespace UpService
             get { return (this["StartScript"] as CDATAElement); }
         }
         public string StartScript { get { return StartScriptEl.Value; } }
+
+        [ConfigurationProperty("StopScript")]
+        public CDATAElement StopScriptEl
+        {
+            get { return (this["StopScript"] as CDATAElement); }
+        }
+        public string StopScript { get { return StopScriptEl.Value; } }
+
     }
 }

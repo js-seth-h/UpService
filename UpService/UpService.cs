@@ -20,97 +20,74 @@ namespace UpService
         private LogWriter logger = HostLogger.Get<UpService>();
 
         protected Thread MainThread;
-        protected ManualResetEvent ShutdownEvent;
+        //protected ManualResetEvent ShutdownEvent;
         //private Topshelf.Runtime.HostSettings s1;
         HostControl HostControl;
 
         public UpService()
         { 
         }
-        PowerShell _instance;
+        PowerShell PowerShellInstance;
         private void ServiceMain()
         {
             UpServiceSection section =
                 ConfigurationManager.GetSection("upService") as UpServiceSection; 
-            string script = section.StartScript; 
-            using (PowerShell PowerShellInstance = PowerShell.Create())
+            string script = section.StartScript;
+            logger.Debug(string.Format("script = {0}", script));
+            RunScript(script);
+            logger.Debug("StartScript Done!!");
+        }
+
+        private void RunScript(string script)
+        {
+
+            using (PowerShellInstance = PowerShell.Create())
             {
-                logger.Debug(string.Format("script = {0}", script));
-                // this script has a sleep in it to simulate a long running script
                 PowerShellInstance.AddScript(script);
-                //Collection<PSObject> PSOutput = PowerShellInstance.Invoke();
 
-                _instance = PowerShellInstance;
-                _instance.Streams.Progress.DataAdded += Progress_DataAdded;
-                _instance.Streams.Error.DataAdded += Error_DataAdded;
-                _instance.Streams.Verbose.DataAdded += Verbose_DataAdded;
-                _instance.Streams.Debug.DataAdded += Debug_DataAdded;
-                _instance.Streams.Warning.DataAdded += Warning_DataAdded;
+                PowerShellInstance.Streams.Progress.DataAdded += Progress_DataAdded;
+                PowerShellInstance.Streams.Error.DataAdded += Error_DataAdded;
+                PowerShellInstance.Streams.Verbose.DataAdded += Verbose_DataAdded;
+                PowerShellInstance.Streams.Debug.DataAdded += Debug_DataAdded;
+                PowerShellInstance.Streams.Warning.DataAdded += Warning_DataAdded;
 
 
-                // begin invoke execution on the pipeline
                 IAsyncResult result = PowerShellInstance.BeginInvoke();
-
-                // do something else until execution has completed.
-                // this could be sleep/wait, or perhaps some other work
-                while (result.IsCompleted == false)
-                {
-                    logger.Debug("Waiting for pipeline to finish...");
-                    bool bSignaled = ShutdownEvent.WaitOne(0);
-                    if (bSignaled)
-                    {
-                        PowerShellInstance.Stop();
-                        logger.Debug("Stop by command");
-                        HostControl.Stop();
-                        return;
-
-                    }
-                    Thread.Sleep(1000);
-
-                    // might want to place a timeout here...
-                }
-                logger.Debug(result.ToString());
-
                 foreach (PSObject pso in PowerShellInstance.EndInvoke(result))
                 {
-                    //logger.Debug("{0,-20}{1}",
-                    //        result.Members["ProcessName"].Value,
-                    //        result.Members["Id"].Value);
                     logger.Debug(String.Format("PSO {0}", pso.ToString()));
                 } // End foreach.
-
-                logger.Debug("Finished!"); 
             }
         }
 
 
         void Warning_DataAdded(object sender, DataAddedEventArgs e)
         { 
-            var record = _instance.Streams.Warning[e.Index];
+            var record = PowerShellInstance.Streams.Warning[e.Index];
             logger.Debug(record.Message);
         }
 
         void Debug_DataAdded(object sender, DataAddedEventArgs e)
         { 
-            var record = _instance.Streams.Debug[e.Index];
+            var record = PowerShellInstance.Streams.Debug[e.Index];
             logger.Debug(record.Message);
         }
 
         void Progress_DataAdded(object sender, DataAddedEventArgs e)
         { 
-            var record = _instance.Streams.Progress[e.Index];
+            var record = PowerShellInstance.Streams.Progress[e.Index];
             logger.Debug(record.SecondsRemaining);
         }
 
         void Verbose_DataAdded(object sender, DataAddedEventArgs e)
         { 
-            var record = _instance.Streams.Verbose[e.Index];
+            var record = PowerShellInstance.Streams.Verbose[e.Index];
             logger.Debug(record.Message);
         }
 
         void Error_DataAdded(object sender, DataAddedEventArgs e)
         { 
-            var record = _instance.Streams.Error[e.Index];
+            var record = PowerShellInstance.Streams.Error[e.Index];
             logger.Debug(record.ErrorDetails);
             logger.Debug(record.Exception);
         }
@@ -121,7 +98,7 @@ namespace UpService
 
             // create the manual reset event and
             // set it to an initial state of unsignaled
-            ShutdownEvent = new ManualResetEvent(false);
+            //ShutdownEvent = new ManualResetEvent(false);
 
             // create the worker thread
             MainThread = new Thread(ts);
@@ -134,8 +111,19 @@ namespace UpService
 
         public bool Stop(HostControl hostControl)
         {
-            ShutdownEvent.Set();
-            // wait for the thread to stop giving it 10 seconds
+
+            //UpServiceSection section =
+            //    ConfigurationManager.GetSection("upService") as UpServiceSection;
+            //string script = section.StopScript;
+            //logger.Debug(string.Format("script = {0}", script));
+            //RunScript(script);
+            //logger.Debug("StopScript Done!!");
+
+            //var asyncResult = PowerShellInstance.BeginStop(null, null);
+
+            //PowerShellInstance.EndStop(asyncResult); 
+
+            PowerShellInstance.Stop();
             MainThread.Join(10000);
             return true;
         }

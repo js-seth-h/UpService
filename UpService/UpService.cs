@@ -51,12 +51,7 @@ namespace UpService
                 PowerShellInstance.Streams.Debug.DataAdded += Debug_DataAdded;
                 PowerShellInstance.Streams.Warning.DataAdded += Warning_DataAdded;
 
-
-                IAsyncResult result = PowerShellInstance.BeginInvoke();
-                foreach (PSObject pso in PowerShellInstance.EndInvoke(result))
-                {
-                    logger.Debug(String.Format("PSO {0}", pso.ToString()));
-                } // End foreach.
+                PowerShellInstance.Invoke();
             }
         }
 
@@ -112,19 +107,19 @@ namespace UpService
         public bool Stop(HostControl hostControl)
         {
 
-            //UpServiceSection section =
-            //    ConfigurationManager.GetSection("upService") as UpServiceSection;
-            //string script = section.StopScript;
-            //logger.Debug(string.Format("script = {0}", script));
-            //RunScript(script);
+            UpServiceSection section =
+                ConfigurationManager.GetSection("upService") as UpServiceSection;
+            string script = section.StopScript;
+            logger.Debug(string.Format("script = {0}", script));
+            RunScript(script);
             //logger.Debug("StopScript Done!!");
 
             //var asyncResult = PowerShellInstance.BeginStop(null, null);
 
             //PowerShellInstance.EndStop(asyncResult); 
 
-            PowerShellInstance.Stop();
-            MainThread.Join(10000);
+            //PowerShellInstance.Stop();
+            //MainThread.Join(10000);
             return true;
         }
     }
